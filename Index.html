@@ -914,6 +914,7 @@
   }
 
   /* Regla mostrada al elegir actividad */
+  /* .rule-tag — mostrado/ocultado con GSAP (ver updateRules) */
   .rule-tag {
     padding: 12px 16px;
     background: var(--surface-2);
@@ -924,7 +925,7 @@
     margin-bottom: 16px;
     display: none;
     line-height: 1.5;
-    animation: rise 0.4s var(--soft);
+    opacity: 0;
   }
   .rule-tag b { color: var(--acc); font-weight: 600; }
 
@@ -981,16 +982,11 @@
     font-family: var(--mono);
   }
 
+  /* .dynamic-fields — animado por GSAP height auto (ver updateRules) */
   .dynamic-fields {
-    max-height: 0;
+    height: 0;
     overflow: hidden;
     opacity: 0;
-    transition: max-height 0.5s var(--soft), opacity 0.4s var(--soft);
-  }
-  .dynamic-fields.show {
-    max-height: 600px;
-    opacity: 1;
-    margin-top: 4px;
   }
 
   /* —— Honor toggle —— */
@@ -1085,7 +1081,8 @@
   .submit-btn:hover .submit-btn-content svg { transform: translateX(4px); }
 
   /* —— Estado: ya registrado —— */
-  .done-state { display: none; text-align: center; padding: 28px 0 8px; animation: pop 0.6s var(--spring); }
+  /* .done-state — pop animado por GSAP en checkUserStatus */
+  .done-state { display: none; text-align: center; padding: 28px 0 8px; opacity: 0; }
   .done-circle {
     width: 90px; height: 90px;
     margin: 0 auto 22px;
@@ -2377,10 +2374,15 @@
       `;
       item.addEventListener('click', () => {
         vibrate();
-        selectUser(name, true);
-        closeSheet();
+        gsap.to(item, { scale: 0.96, duration: 0.1, ease: 'smooth', yoyo: true, repeat: 1,
+          onComplete() { selectUser(name, true); closeSheet(); } });
       });
       container.appendChild(item);
+    });
+    // Stagger de entrada de los items
+    gsap.from(container.querySelectorAll('.sheet-item'), {
+      opacity: 0, x: -16, duration: 0.35, ease: 'soft',
+      stagger: { each: 0.04, from: 'start' }
     });
   }
 
@@ -2454,6 +2456,8 @@
     $('athleteAvatar').textContent = getInitials(name);
     $('athleteName').textContent = name;
     $('athleteSub').textContent = 'Toca para cambiar';
+    // Pop del avatar al confirmar selección
+    gsap.fromTo($('athleteAvatar'), { scale: 0.7 }, { scale: 1, duration: 0.5, ease: 'spring' });
 
     showGreeting(name);
     checkUserStatus();
@@ -2508,15 +2512,29 @@
     if (typeof google === 'undefined' || !google.script) return;
 
     google.script.run.withSuccessHandler((res) => {
+      const form = $('formCard');
+      const done = $('doneState');
       if (res && res.yaRegistro) {
-        $('formCard').style.display = 'none';
-        $('doneState').style.display = 'block';
         $('doneTag').textContent = 'Hoy: ' + (res.tipo || 'Registrado');
-        confetti({ particleCount: 60, spread: 60, origin: { y: 0.4 } });
         buildLateWAUrl(res.tipo);
+        // Oculta el form con fade-out, muestra done con pop
+        gsap.to(form, {
+          opacity: 0, y: -16, duration: 0.3, ease: 'smooth',
+          onComplete() {
+            form.style.display = 'none';
+            done.style.display = 'block';
+            gsap.fromTo(done,
+              { opacity: 0, scale: 0.88 },
+              { opacity: 1, scale: 1, duration: 0.55, ease: 'spring' });
+          }
+        });
+        confetti({ particleCount: 60, spread: 60, origin: { y: 0.4 } });
       } else {
-        $('formCard').style.display = 'block';
-        $('doneState').style.display = 'none';
+        done.style.display = 'none';
+        form.style.display = 'block';
+        gsap.fromTo(form,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.5, ease: 'spring-soft' });
         updateProgress();
       }
     }).verificarEstadoHoy(selectedUser);
@@ -2539,38 +2557,70 @@
   // —————————————————————————————————————————————————
   // ACTIVITY CHIPS
   // —————————————————————————————————————————————————
+  // Activity chips — selección con micro-bounce GSAP + stagger deselección
   document.querySelectorAll('.activity-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       vibrate();
-      document.querySelectorAll('.activity-chip').forEach(c => c.classList.remove('selected'));
+      // Deselecciona todos con fade leve
+      document.querySelectorAll('.activity-chip.selected').forEach(c => {
+        c.classList.remove('selected');
+        gsap.to(c, { scale: 0.97, duration: 0.15, ease: 'smooth', yoyo: true, repeat: 0 });
+      });
       chip.classList.add('selected');
+      // Micro-bounce en el chip seleccionado
+      gsap.fromTo(chip, { scale: 0.94 }, { scale: 1, duration: 0.5, ease: 'spring' });
+      // Pop en el ícono
+      const icon = chip.querySelector('.ac-icon');
+      if (icon) gsap.fromTo(icon, { scale: 0.8, rotation: -8 }, { scale: 1.15, rotation: 0, duration: 0.45, ease: 'spring' });
       $('tipo').value = chip.dataset.value;
       updateRules(chip.dataset.value);
     });
   });
 
+  // —— updateRules — GSAP anima la entrada/salida de campos y rule-tag
   function updateRules(tipo) {
-    const tag = $('ruleTag');
+    const tag    = $('ruleTag');
     const fields = $('dynamicFields');
-    const honor = $('lblHonor');
-    const cals = $('calorias');
+    const honor  = $('lblHonor');
+    const cals   = $('calorias');
+    const isActive = (tipo === 'Gimnasio' || tipo === 'Fuera del Gym');
 
-    tag.style.display = 'block';
-
+    // Actualiza texto del tag
     if (tipo === 'Gimnasio') {
       tag.innerHTML = '🎯 Mínimo: <b>1:15 hrs</b> ó <b>500 kcal</b>';
-      fields.classList.add('show');
-      honor.style.display = 'flex';
-      cals.required = true;
     } else if (tipo === 'Fuera del Gym') {
       tag.innerHTML = '🏃 Mínimo: <b>90 min / 550 kcal</b> ó <b>700 kcal en menos de 2 hrs</b>';
-      fields.classList.add('show');
-      honor.style.display = 'flex';
-      cals.required = true;
     } else {
       tag.innerHTML = '🌴 Día de descanso o justificante médico — sin requisitos.';
-      fields.classList.remove('show');
-      honor.style.display = 'none';
+    }
+
+    // Rule tag — fade-in con rise (primera vez) o swap (cambio de tipo)
+    if (tag.style.display === 'none' || !tag.style.display) {
+      tag.style.display = 'block';
+      gsap.fromTo(tag, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: 'soft' });
+    } else {
+      gsap.fromTo(tag, { opacity: 0.4 }, { opacity: 1, duration: 0.25, ease: 'soft' });
+    }
+
+    if (isActive) {
+      cals.required = true;
+      // Campos dinámicos: height auto + fade
+      honor.style.display = 'flex';
+      gsap.set(fields, { height: 'auto', opacity: 1 });
+      gsap.from(fields, { height: 0, opacity: 0, duration: 0.45, ease: 'spring-soft', overwrite: 'auto' });
+      gsap.from(fields.querySelectorAll('.field'), {
+        opacity: 0, y: 12, duration: 0.35, ease: 'soft', stagger: 0.07, delay: 0.1
+      });
+      gsap.from(honor, { opacity: 0, y: 8, duration: 0.35, ease: 'soft', delay: 0.2 });
+    } else {
+      // Cierra campos y honor
+      gsap.to(fields, {
+        height: 0, opacity: 0, duration: 0.35, ease: 'smooth', overwrite: 'auto'
+      });
+      gsap.to(honor, {
+        opacity: 0, duration: 0.2, ease: 'smooth',
+        onComplete() { honor.style.display = 'none'; }
+      });
       $('evidencia').checked = false;
       $('lblHonor').classList.remove('active');
       cals.required = false;
@@ -2609,6 +2659,8 @@
     const content = $('submitContent');
     btn.disabled = true;
     content.innerHTML = '<span style="display:inline-flex;align-items:center;gap:10px;">Guardando<span class="streak-flame">·</span></span>';
+    // Pulso de carga en el botón mientras espera
+    gsap.to(btn, { opacity: 0.75, scale: 0.98, duration: 0.6, ease: 'sine.inOut', repeat: -1, yoyo: true, id: 'btnPulse' });
 
     const horas = ($('horas').value || '0').padStart(2, '0');
     const minutos = ($('minutos').value || '0').padStart(2, '0');
@@ -2627,6 +2679,8 @@
 
     if (typeof google !== 'undefined' && google.script) {
       google.script.run.withSuccessHandler((res) => {
+        gsap.killTweensOf(btn, 'opacity,scale');
+        gsap.set(btn, { opacity: 1, scale: 1 });
         btn.disabled = false;
         content.innerHTML = 'Registrar actividad <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
         if (res.success) onSubmitSuccess({ tipo, tiempo, calorias, notas });
@@ -2635,6 +2689,8 @@
     } else {
       // Demo
       setTimeout(() => {
+        gsap.killTweensOf(btn, 'opacity,scale');
+        gsap.set(btn, { opacity: 1, scale: 1 });
         btn.disabled = false;
         content.innerHTML = 'Registrar actividad <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
         onSubmitSuccess({ tipo, tiempo, calorias, notas });
@@ -2676,8 +2732,9 @@
     $('gymForm').reset();
     document.querySelectorAll('.activity-chip').forEach(c => c.classList.remove('selected'));
     $('lblHonor').classList.remove('active');
-    $('ruleTag').style.display = 'none';
-    $('dynamicFields').classList.remove('show');
+    // Oculta rule-tag y dynamic-fields con GSAP
+    gsap.to($('ruleTag'),      { opacity: 0, y: -8, duration: 0.25, ease: 'smooth', onComplete: () => { $('ruleTag').style.display = 'none'; } });
+    gsap.to($('dynamicFields'), { height: 0, opacity: 0, duration: 0.3, ease: 'smooth' });
   }
 
   // —————————————————————————————————————————————————
