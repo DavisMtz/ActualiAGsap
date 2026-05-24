@@ -16,6 +16,18 @@
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
+<!-- Motor de animaciones: GSAP + plugins (gratuitos al 100% gracias a Webflow) -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Flip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Observer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Draggable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/InertiaPlugin.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/CustomEase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/CustomWiggle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollToPlugin.min.js"></script>
+
 <style>
   :root {
     /* —— Paleta —— */
@@ -118,17 +130,18 @@
     -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 80%);
   }
 
-  /* —— Scroll Progress Bar —— */
+  /* —— Scroll Progress Bar (impulsado por GSAP ScrollTrigger) —— */
   .scroll-progress {
     position: fixed;
     top: 0;
     left: 0;
     height: 2px;
     background: var(--acc);
-    width: 0%;
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    width: 100%;
     z-index: 90;
     box-shadow: 0 0 12px var(--acc-glow);
-    transition: width 0.1s linear;
     pointer-events: none;
   }
 
@@ -153,10 +166,10 @@
     opacity: 0;
     pointer-events: none;
   }
+  /* anime-intro.active es controlado por GSAP timeline (ver gsapPlayAnimeIntro) */
   .anime-intro.active {
     opacity: 1;
     pointer-events: auto;
-    animation: anime-fade-out 0.8s 2.6s cubic-bezier(0.8, 0, 0.2, 1) forwards;
   }
   .anime-bg-lines {
     position: absolute;
@@ -167,11 +180,7 @@
       #000 2%,
       #000 4%
     );
-    animation: anime-spin 15s linear infinite;
     opacity: 0;
-  }
-  .anime-intro.active .anime-bg-lines {
-    animation: anime-spin 15s linear infinite, anime-fade-in 0.2s forwards;
   }
   .anime-slash {
     position: absolute;
@@ -180,10 +189,8 @@
     background: #fff;
     box-shadow: 0 0 30px 15px var(--acc);
     transform: rotate(-10deg) scaleX(0);
+    transform-origin: left center;
     z-index: 2;
-  }
-  .anime-intro.active .anime-slash {
-    animation: anime-slash-cut 0.5s 0.1s cubic-bezier(0.8, 0, 0.2, 1) forwards;
   }
   .anime-content {
     position: relative;
@@ -203,9 +210,6 @@
     text-shadow: 4px 4px 0px #fff, -2px -2px 0px var(--danger);
     opacity: 0;
   }
-  .anime-intro.active .anime-title {
-    animation: anime-impact 0.5s 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-  }
   .anime-subtitle {
     font-family: var(--display);
     font-size: clamp(14px, 4.5vw, 22px);
@@ -215,10 +219,6 @@
     letter-spacing: 0.05em;
     line-height: 1.3;
     opacity: 0;
-    clip-path: inset(0 100% 0 0);
-  }
-  .anime-intro.active .anime-subtitle {
-    animation: anime-reveal-text 0.6s 0.8s cubic-bezier(0.7, 0, 0.3, 1) forwards;
   }
   .anime-subtitle b { color: var(--acc); }
 
@@ -271,13 +271,8 @@
     100% { transform: translateY(0); opacity: 1; }
   }
 
-  .stagger > * { opacity: 0; animation: rise 0.7s var(--soft) forwards; }
-  .stagger > *:nth-child(1) { animation-delay: 0.05s; }
-  .stagger > *:nth-child(2) { animation-delay: 0.15s; }
-  .stagger > *:nth-child(3) { animation-delay: 0.25s; }
-  .stagger > *:nth-child(4) { animation-delay: 0.35s; }
-  .stagger > *:nth-child(5) { animation-delay: 0.45s; }
-  .stagger > *:nth-child(6) { animation-delay: 0.55s; }
+  /* .stagger items are animated via GSAP (see gsapStagger) */
+  .stagger > * { opacity: 0; will-change: opacity, transform; }
 
   /* —— Header —— */
   .header {
@@ -527,7 +522,7 @@
     width: 0%;
     background: var(--acc);
     border-radius: 999px;
-    transition: width 1.4s var(--spring);
+    /* width animado por GSAP updateProgress */
     position: relative;
     box-shadow: 0 0 12px var(--acc-glow);
   }
@@ -678,9 +673,8 @@
     z-index: 100;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s var(--smooth);
   }
-  .sheet-overlay.open { opacity: 1; pointer-events: auto; }
+  .sheet-overlay.open { pointer-events: auto; }
 
   .sheet {
     position: fixed;
@@ -693,14 +687,13 @@
     border-top: 1px solid var(--border-strong);
     z-index: 101;
     transform: translateY(100%);
-    transition: transform 0.5s var(--spring-soft);
     max-height: 80vh;
     max-height: 80dvh;
     display: flex;
     flex-direction: column;
     padding-bottom: env(safe-area-inset-bottom);
+    touch-action: pan-y;
   }
-  .sheet.open { transform: translateY(0); }
   .sheet-handle {
     width: 38px;
     height: 4px;
@@ -804,7 +797,6 @@
     border-radius: var(--r-md);
     margin-bottom: 16px;
     display: none;
-    animation: rise 0.5s var(--soft);
     position: relative;
     overflow: hidden;
   }
@@ -1157,7 +1149,7 @@
 
   /* —— Ranking —— */
   .rank-list { list-style: none; margin: 0; padding: 0; }
-  .rank-row { display: flex; align-items: center; gap: 12px; padding: 14px 4px; border-bottom: 1px solid var(--border); opacity: 0; animation: rise 0.5s var(--soft) forwards; transition: transform 0.4s var(--spring-soft); }
+  .rank-row { display: flex; align-items: center; gap: 12px; padding: 14px 4px; border-bottom: 1px solid var(--border); opacity: 0; transition: transform 0.4s var(--spring-soft); }
   .rank-row:hover { transform: translateX(4px); }
   .rank-row:last-child { border-bottom: none; }
   .rank-row.you { background: var(--acc-soft); margin: 0 -8px; padding: 14px 12px; border-radius: var(--r-md); border-bottom: 1px solid var(--border); position: relative; }
@@ -1200,7 +1192,7 @@
   .refresh-btn { background: var(--surface-2); border: 1px solid var(--border); width: 32px; height: 32px; border-radius: 10px; color: var(--text-mid); cursor: pointer; display: grid; place-items: center; transition: all 0.3s; }
   .refresh-btn:hover { color: var(--acc); border-color: var(--acc); }
   .refresh-btn:active { transform: rotate(180deg); }
-  .refresh-btn.spin svg { animation: spin 1s linear; }
+  /* .refresh-btn.spin svg → animado por GSAP */
 
   /* —— Ranking Tabs —— */
   .rank-tabs { display:flex; gap:6px; margin-bottom:14px; background:var(--surface-2); padding:4px; border-radius:var(--r-md); }
@@ -1209,14 +1201,8 @@
   .rank-tab:not(.active):hover { color:var(--text-mid); }
   /* —— Period label —— */
   .rank-period-label { font-family:var(--mono); font-size:9px; text-transform:uppercase; letter-spacing:0.18em; color:var(--text-low); text-align:center; margin-bottom:10px; }
-  /* —— Viewport + slide transitions —— */
+  /* —— Viewport + slide transitions (controladas por GSAP) —— */
   .rank-viewport { overflow:hidden; }
-  .rank-list { transition:opacity 0.22s var(--smooth),transform 0.28s var(--spring-soft); }
-  .rank-list.slide-out-left  { opacity:0; transform:translateX(-24px); pointer-events:none; }
-  .rank-list.slide-out-right { opacity:0; transform:translateX(24px);  pointer-events:none; }
-  .rank-list.slide-in-left   { opacity:0; transform:translateX(24px); }
-  .rank-list.slide-in-right  { opacity:0; transform:translateX(-24px); }
-  .rank-list.slide-in-active { opacity:1; transform:translateX(0); }
   /* —— Tap feedback —— */
   .rank-row:active { transform:scale(0.97) translateX(0) !important; }
   /* —— Trend arrows —— */
@@ -1227,7 +1213,7 @@
   /* —— Mini-calendar semanal —— */
   .week-dots { display:flex; gap:8px; margin-top:14px; justify-content:center; }
   .week-dot { display:flex; flex-direction:column; align-items:center; gap:5px; }
-  .week-dot-circle { width:30px; height:30px; border-radius:50%; background:var(--surface-3); border:2px solid var(--border); transition:transform 0.3s var(--spring),box-shadow 0.3s; opacity:0; animation:rise 0.4s var(--soft) forwards; }
+  .week-dot-circle { width:30px; height:30px; border-radius:50%; background:var(--surface-3); border:2px solid var(--border); transition:transform 0.3s var(--spring),box-shadow 0.3s; opacity:0; }
   .week-dot-circle.cumple   { background:var(--success); border-color:var(--success); box-shadow:0 0 10px rgba(74,222,128,0.3); }
   .week-dot-circle.justif   { background:#f59e0b; border-color:#f59e0b; }
   .week-dot-circle.nocumple { background:#ef4444; border-color:#ef4444; }
@@ -1246,15 +1232,15 @@
 
   /* —— Activity ticker —— */
   .activity-ticker { overflow:hidden; margin:0 -20px; border-top:1px solid var(--border); border-bottom:1px solid var(--border); background:var(--surface-2); }
-  .ticker-track { display:flex; gap:28px; padding:10px 20px; animation:marquee 22s linear infinite; width:max-content; }
+  /* .ticker-track → marquee animado por GSAP (ver renderActivityTicker) */
+  .ticker-track { display:flex; gap:28px; padding:10px 20px; width:max-content; will-change:transform; }
   .ticker-item { display:flex; align-items:center; gap:8px; white-space:nowrap; font-size:11px; color:var(--text-mid); font-family:var(--mono); }
   .ticker-dot { width:6px; height:6px; border-radius:50%; background:var(--success); flex-shrink:0; }
   .ticker-name { font-weight:700; color:var(--text-hi); }
   .ticker-sep { color:var(--text-low); }
 
   /* —— Danger zone strip —— */
-  .danger-strip { display:flex; align-items:center; gap:10px; padding:12px 16px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); border-radius:var(--r-md); margin-bottom:12px; opacity:0; transform:translateY(-8px); transition:opacity 0.3s var(--smooth),transform 0.3s var(--spring-soft); }
-  .danger-strip.show { opacity:1; transform:translateY(0); }
+  .danger-strip { display:flex; align-items:center; gap:10px; padding:12px 16px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); border-radius:var(--r-md); margin-bottom:12px; opacity:0; transform:translateY(-8px); }
   .danger-strip.critical { background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.4); }
   .danger-strip .danger-icon { font-size:18px; flex-shrink:0; }
   .danger-strip .danger-text { font-size:13px; color:var(--text-mid); line-height:1.4; }
@@ -1263,13 +1249,11 @@
   /* —— Modales —— */
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    z-index: 200; display: none; align-items: flex-end; justify-content: center; opacity: 0; transition: opacity 0.3s var(--smooth);
+    z-index: 200; display: none; align-items: flex-end; justify-content: center; opacity: 0;
     padding: 18px; padding-bottom: max(18px, env(safe-area-inset-bottom));
   }
   @media (min-width: 540px) { .modal-overlay { align-items: center; } }
-  .modal-overlay.show { opacity: 1; }
-  .modal { background: var(--surface-1); border: 1px solid var(--border-strong); width: 100%; max-width: 420px; padding: 32px 24px 24px; border-radius: var(--r-xl); text-align: center; transform: translateY(40px) scale(0.95); transition: transform 0.5s var(--spring-soft); box-shadow: var(--shadow-deep); position: relative; overflow: hidden; }
-  .modal-overlay.show .modal { transform: translateY(0) scale(1); }
+  .modal { background: var(--surface-1); border: 1px solid var(--border-strong); width: 100%; max-width: 420px; padding: 32px 24px 24px; border-radius: var(--r-xl); text-align: center; transform: translateY(40px) scale(0.95); box-shadow: var(--shadow-deep); position: relative; overflow: hidden; }
   .modal h2 { font-family: var(--display); font-size: 26px; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 8px; }
   .modal p { color: var(--text-mid); line-height: 1.5; font-size: 14px; margin: 0 0 20px; }
   .modal-icon { width: 70px; height: 70px; margin: 0 auto 18px; border-radius: 50%; display: grid; place-items: center; position: relative; }
@@ -1457,8 +1441,7 @@
   }
 
   /* Toast simple */
-  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface-3); border: 1px solid var(--border-strong); color: var(--text-hi); padding: 12px 18px; border-radius: 999px; font-size: 13px; font-weight: 500; z-index: 300; opacity: 0; transition: all 0.4s var(--spring); box-shadow: var(--shadow-deep); }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface-3); border: 1px solid var(--border-strong); color: var(--text-hi); padding: 12px 18px; border-radius: 999px; font-size: 13px; font-weight: 500; z-index: 300; opacity: 0; box-shadow: var(--shadow-deep); }
   .toast.danger { border-color: var(--danger); color: var(--danger); }
 
   /* —— REGLAMENTO / RULES CARD —— */
@@ -1496,22 +1479,13 @@
   .rules-item.open .rs-icon { transform: scale(1.15) rotate(-6deg); }
   .rs-name { flex: 1; font-family: var(--display); font-size: 14px; font-weight: 600; color: var(--text-hi); letter-spacing: -0.01em; }
   .rs-arrow { font-size: 16px; color: var(--text-low); transition: transform 0.4s var(--soft), color 0.3s; }
-  .rules-item.open .rs-arrow { transform: rotate(90deg); color: var(--acc); }
-  .rs-content { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.5s var(--soft); }
-  .rules-item.open .rs-content { grid-template-rows: 1fr; }
-  .rs-content > div { overflow: hidden; min-height: 0; }
-  .rs-body { padding: 0 18px 18px 56px; font-size: 13px; line-height: 1.65; color: var(--text-mid); }
+  /* .rs-arrow rotation → GSAP (ver accordion JS) */
+  /* rs-content — GSAP anima height de rs-body directamente (ver accordion JS) */
+  .rs-content { overflow: hidden; }
+  .rs-body { padding: 0 18px 18px 56px; font-size: 13px; line-height: 1.65; color: var(--text-mid); height: 0; overflow: hidden; opacity: 0; }
   .rs-body ol { list-style: none; margin: 0; padding: 0; counter-reset: rs; }
-  .rs-body ol li { counter-increment: rs; padding: 6px 0; padding-left: 26px; position: relative; opacity: 0; transform: translateX(-8px); transition: opacity 0.4s var(--soft), transform 0.4s var(--soft); }
-  .rules-item.open .rs-body ol li { opacity: 1; transform: translateX(0); }
-  .rules-item.open .rs-body ol li:nth-child(1) { transition-delay: 0.10s; }
-  .rules-item.open .rs-body ol li:nth-child(2) { transition-delay: 0.16s; }
-  .rules-item.open .rs-body ol li:nth-child(3) { transition-delay: 0.22s; }
-  .rules-item.open .rs-body ol li:nth-child(4) { transition-delay: 0.28s; }
-  .rules-item.open .rs-body ol li:nth-child(5) { transition-delay: 0.34s; }
+  .rs-body ol li { counter-increment: rs; padding: 6px 0; padding-left: 26px; position: relative; }
   .rs-body ol li::before { content: counter(rs, decimal-leading-zero); position: absolute; left: 0; top: 8px; font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--acc); letter-spacing: 0.04em; }
-  .rs-body p { margin: 0 0 10px; opacity: 0; transform: translateX(-8px); transition: opacity 0.4s var(--soft) 0.10s, transform 0.4s var(--soft) 0.10s; }
-  .rules-item.open .rs-body p { opacity: 1; transform: translateX(0); }
   .rs-body b { color: var(--text-hi); font-weight: 600; }
   .rs-body code { font-family: var(--mono); font-size: 11px; padding: 2px 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--acc); letter-spacing: 0.04em; }
 
@@ -1535,16 +1509,9 @@
   .rules-quote em { color: var(--acc); font-style: italic; font-weight: 400; }
   .rules-quote::before { content: '"'; display: block; font-size: 64px; line-height: 0.5; color: var(--border-strong); margin-bottom: 14px; font-family: var(--serif); }
 
-  /* Scroll-reveal */
-  .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.8s var(--soft), transform 0.8s var(--soft); will-change: opacity, transform; }
-  .reveal.in { opacity: 1; transform: translateY(0); }
-  .reveal-stagger.in > * { animation: rise 0.7s var(--soft) backwards; }
-  .reveal-stagger.in > *:nth-child(1) { animation-delay: 0.05s; }
-  .reveal-stagger.in > *:nth-child(2) { animation-delay: 0.13s; }
-  .reveal-stagger.in > *:nth-child(3) { animation-delay: 0.21s; }
-  .reveal-stagger.in > *:nth-child(4) { animation-delay: 0.29s; }
-  .reveal-stagger.in > *:nth-child(5) { animation-delay: 0.37s; }
-  .reveal-stagger.in > *:nth-child(6) { animation-delay: 0.45s; }
+  /* Scroll-reveal (impulsado por GSAP ScrollTrigger) */
+  .reveal { opacity: 0; will-change: opacity, transform; }
+  .reveal-stagger > * { will-change: opacity, transform; }
 
   .rules-link { display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; background: transparent; border: 1px solid var(--border); border-radius: 999px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--text-mid); font-weight: 600; font-family: inherit; cursor: pointer; text-decoration: none; transition: all 0.25s var(--smooth); }
   .rules-link:hover { border-color: var(--acc); color: var(--acc); }
@@ -2048,6 +2015,28 @@
 
 <script>
   // —————————————————————————————————————————————————
+  // GSAP MOTION ENGINE
+  // Registro de plugins + easings personalizados que reemplazan las
+  // CSS vars (--spring, --spring-soft, --soft, --smooth) usando CustomEase.
+  // —————————————————————————————————————————————————
+  gsap.registerPlugin(ScrollTrigger, ScrollToPlugin, Flip, Observer, Draggable, InertiaPlugin, SplitText, CustomEase, CustomWiggle);
+
+  CustomEase.create('spring',      '0.34, 1.56, 0.64, 1');
+  CustomEase.create('spring-soft', '0.16, 1.20, 0.30, 1');
+  CustomEase.create('soft',        '0.22, 0.61, 0.36, 1');
+  CustomEase.create('smooth',      '0.40, 0.00, 0.20, 1');
+  CustomEase.create('whip',        '0.80, 0.00, 0.20, 1');
+  CustomEase.create('impact',      '0.175, 0.885, 0.32, 1.275');
+  CustomWiggle.create('flameWiggle',  { wiggles: 8, type: 'random' });
+  CustomWiggle.create('alertWiggle',  { wiggles: 6, type: 'easeOut' });
+
+  gsap.defaults({ ease: 'soft', duration: 0.6 });
+
+  // Honra preferencias de movimiento reducido
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReducedMotion) gsap.globalTimeline.timeScale(2.5);
+
+  // —————————————————————————————————————————————————
   // STATE
   // —————————————————————————————————————————————————
   let usersList = [];
@@ -2119,28 +2108,35 @@
     return name.trim().split(/\s+/).slice(0, 2).map(n => n[0]).join('').toUpperCase();
   }
 
+  // GSAP-powered toast (entrada con spring + salida suave)
   function showToast(msg, danger = false) {
     const t = $('toast');
     t.textContent = msg;
     t.classList.toggle('danger', danger);
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2600);
+    gsap.killTweensOf(t);
+    gsap.fromTo(t,
+      { y: 80, opacity: 0, xPercent: -50 },
+      { y: 0,  opacity: 1, xPercent: -50, duration: 0.5, ease: 'spring' });
+    gsap.to(t, { y: 80, opacity: 0, duration: 0.4, ease: 'smooth', delay: 2.4 });
   }
 
+  // GSAP-powered numeric tween (sustituye al requestAnimationFrame manual)
   function animateNumber(el, target, duration = 1200, prefix = '', suffix = '') {
     const start = parseFloat(el.dataset.current || 0);
-    const startTime = performance.now();
     const isFloat = target % 1 !== 0;
-    function step(now) {
-      const elapsed = now - startTime;
-      const t = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - t, 3);
-      const value = start + (target - start) * eased;
-      el.textContent = prefix + (isFloat ? value.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : Math.round(value)) + suffix;
-      if (t < 1) requestAnimationFrame(step);
-      else el.dataset.current = target;
-    }
-    requestAnimationFrame(step);
+    const proxy = { v: start };
+    gsap.to(proxy, {
+      v: target,
+      duration: duration / 1000,
+      ease: 'power3.out',
+      overwrite: 'auto',
+      onUpdate() {
+        el.textContent = prefix + (isFloat
+          ? proxy.v.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          : Math.round(proxy.v)) + suffix;
+      },
+      onComplete() { el.dataset.current = target; }
+    });
   }
 
   // —————————————————————————————————————————————————
@@ -2163,24 +2159,72 @@
   }
 
   // —————————————————————————————————————————————————
-  // SCROLL PROGRESS
+  // SCROLL PROGRESS — impulsado por GSAP ScrollTrigger
   // —————————————————————————————————————————————————
   function setupScrollProgress() {
     const bar = $('scrollProgress');
     if (!bar) return;
-    let ticking = false;
-    function update() {
-      const h = document.documentElement.scrollHeight - window.innerHeight;
-      const pct = h > 0 ? (window.scrollY / h) * 100 : 0;
-      bar.style.width = pct + '%';
-      ticking = false;
-    }
-    window.addEventListener('scroll', () => {
-      if (!ticking) {
-        requestAnimationFrame(update);
-        ticking = true;
+    gsap.to(bar, {
+      scaleX: 1,
+      ease: 'none',
+      scrollTrigger: {
+        start: 0,
+        end: () => document.documentElement.scrollHeight - window.innerHeight,
+        scrub: 0.15,
+        invalidateOnRefresh: true
       }
-    }, { passive: true });
+    });
+  }
+
+  // —————————————————————————————————————————————————
+  // SCROLL REVEAL — sustituye al IntersectionObserver manual
+  // ScrollTrigger.batch + stagger nativo de GSAP
+  // —————————————————————————————————————————————————
+  function setupScrollReveals() {
+    // Bloques simples [data-reveal]
+    ScrollTrigger.batch('[data-reveal]', {
+      start: 'top 88%',
+      once: true,
+      onEnter: batch => {
+        batch.forEach(el => {
+          el.classList.add('in');
+          // Si tiene reveal-stagger, anima a hijos uno por uno
+          if (el.classList.contains('reveal-stagger')) {
+            gsap.from(el.children, {
+              opacity: 0, y: 24, duration: 0.7, ease: 'soft',
+              stagger: { each: 0.08, from: 'start' }
+            });
+          } else {
+            gsap.from(el, { opacity: 0, y: 28, duration: 0.8, ease: 'soft' });
+          }
+          // Contadores numéricos
+          el.querySelectorAll('.rs-num-value[data-count-to]').forEach(c => gsapCountUp(c));
+        });
+      }
+    });
+
+    // Stagger genérico (.stagger)
+    document.querySelectorAll('.stagger').forEach(group => {
+      gsap.from(group.children, {
+        opacity: 0, y: 24, duration: 0.7, ease: 'soft',
+        stagger: 0.1,
+        scrollTrigger: { trigger: group, start: 'top 90%', once: true }
+      });
+    });
+  }
+
+  // Count-up impulsado por GSAP (reemplaza al countUpEl original)
+  function gsapCountUp(el) {
+    if (el.dataset.counted === '1') return;
+    const target = parseFloat(el.dataset.countTo || '0');
+    const proxy = { v: 0 };
+    gsap.to(proxy, {
+      v: target, duration: 1.1, ease: 'power3.out',
+      onUpdate() {
+        el.textContent = (target % 1 === 0) ? Math.round(proxy.v) : proxy.v.toFixed(1);
+      },
+      onComplete() { el.textContent = target; el.dataset.counted = '1'; }
+    });
   }
 
   // —————————————————————————————————————————————————
@@ -2199,8 +2243,9 @@
   }
 
   // —————————————————————————————————————————————————
-  // ANIME INTRO LOGIC
+  // ANIME INTRO — timeline GSAP con SplitText e impacto cinemático
   // —————————————————————————————————————————————————
+  let animeIntroTl = null;
   function playAnimeIntro(name) {
     const firstName = name.split(' ')[0].toUpperCase();
     $('animeTitle').innerHTML = `¡BIENVENIDX,<br><span style="color:#fff">${firstName}!</span>`;
@@ -2208,20 +2253,66 @@
     const randPhrase = animeIntroPhrases[Math.floor(Math.random() * animeIntroPhrases.length)];
     $('animeSub').innerHTML = randPhrase;
 
-    const introBox = $('animeIntro');
+    const introBox  = $('animeIntro');
+    const title     = $('animeTitle');
+    const sub       = $('animeSub');
+    const slash     = introBox.querySelector('.anime-slash');
+    const bgLines   = introBox.querySelector('.anime-bg-lines');
 
-    introBox.classList.remove('active');
-    void introBox.offsetWidth;
+    if (animeIntroTl) animeIntroTl.kill();
+
+    // SplitText para impacto letra por letra del título
+    const splitTitle = new SplitText(title, { type: 'chars,words' });
+    const splitSub   = new SplitText(sub,   { type: 'chars' });
+
     introBox.classList.add('active');
+
+    // Loop infinito del fondo
+    const bgSpin = gsap.to(bgLines, { rotation: 360, duration: 15, repeat: -1, ease: 'none' });
+
+    animeIntroTl = gsap.timeline({
+      defaults: { ease: 'whip' },
+      onComplete: () => {
+        introBox.classList.remove('active');
+        splitTitle.revert();
+        splitSub.revert();
+        bgSpin.kill();
+      }
+    })
+      // Fondo aparece
+      .to(bgLines, { opacity: 0.4, duration: 0.2 }, 0)
+      // Slash diagonal
+      .fromTo(slash,
+        { scaleX: 0, transformOrigin: 'left center', opacity: 1 },
+        { scaleX: 1, duration: 0.2, ease: 'whip' }, 0.1)
+      .to(slash, { scaleX: 0, transformOrigin: 'right center', opacity: 0, duration: 0.3, ease: 'whip' }, 0.3)
+      // Título — impacto de letras con blur y escala
+      .set(title, { opacity: 1 }, 0.3)
+      .from(splitTitle.chars, {
+        opacity: 0, scale: 3, y: 20, filter: 'blur(10px)',
+        duration: 0.5, ease: 'impact',
+        stagger: 0.03
+      }, 0.3)
+      .to(splitTitle.chars, { scale: 1.05, duration: 0.1, ease: 'power1.out' }, '>-0.1')
+      .to(splitTitle.chars, { scale: 1,    duration: 0.15, ease: 'power2.inOut' })
+      // Subtítulo — revelado tipo wipe
+      .set(sub, { opacity: 1, clipPath: 'inset(0 100% 0 0)' }, 0.8)
+      .to(sub, { clipPath: 'inset(0 -10% 0 -10%)', duration: 0.6, ease: 'whip' }, 0.8)
+      .from(splitSub.chars, { opacity: 0, y: 8, duration: 0.4, stagger: 0.015, ease: 'soft' }, 0.85)
+      // Pausa heroica
+      .to({}, { duration: 1.4 })
+      // Salida cinemática (clip-path en franja horizontal)
+      .to(introBox, {
+        opacity: 0,
+        scale: 1.05,
+        clipPath: 'polygon(0 50%, 100% 50%, 100% 50%, 0 50%)',
+        duration: 0.8, ease: 'whip'
+      });
 
     if (navigator.vibrate) {
       setTimeout(() => vibrate([40, 50, 40]), 100);
       setTimeout(() => vibrate(150), 400);
     }
-
-    setTimeout(() => {
-      introBox.classList.remove('active');
-    }, 3600);
   }
 
   // —————————————————————————————————————————————————
@@ -2231,6 +2322,7 @@
     paintStatusStrip();
     paintCountdown();
     setupScrollProgress();
+    setupScrollReveals();
     setupActivityChipMagnet();
 
     if (typeof google !== 'undefined' && google.script && google.script.run) {
@@ -2292,17 +2384,55 @@
     });
   }
 
+  // —————————————————————————————————————————————————
+  // BOTTOM SHEET — timeline GSAP + Draggable (swipe-down para cerrar)
+  // —————————————————————————————————————————————————
+  let sheetDrag = null;
+  let sheetTl = null;
+
   function openSheet() {
     vibrate();
-    $('sheetOverlay').classList.add('open');
-    $('athleteSheet').classList.add('open');
+    const overlay = $('sheetOverlay');
+    const sheet   = $('athleteSheet');
+    overlay.classList.add('open');
     $('sheetSearch').value = '';
     renderSheetList(usersList);
-    setTimeout(() => $('sheetSearch').focus(), 300);
+
+    if (sheetTl) sheetTl.kill();
+    sheetTl = gsap.timeline()
+      .fromTo(overlay, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.25, ease: 'smooth' }, 0)
+      .fromTo(sheet,   { y: '100%' },    { y: '0%',     duration: 0.55, ease: 'spring-soft' }, 0)
+      .add(() => $('sheetSearch').focus(), 0.3);
+
+    // Habilita arrastre vertical con Inertia (solo abajo)
+    if (!sheetDrag) {
+      sheetDrag = Draggable.create(sheet, {
+        type: 'y',
+        inertia: true,
+        edgeResistance: 0.85,
+        bounds: { minY: 0, maxY: window.innerHeight },
+        allowEventDefault: true,
+        onDrag() { if (this.y < 0) gsap.set(sheet, { y: 0 }); },
+        onDragEnd() {
+          // Cierra si el swipe pasa cierto umbral o velocidad
+          if (this.endY > 120 || this.getVelocity('y') > 600) closeSheet();
+          else gsap.to(sheet, { y: 0, duration: 0.45, ease: 'spring-soft' });
+        }
+      })[0];
+    } else {
+      sheetDrag.enable();
+    }
   }
+
   function closeSheet() {
-    $('sheetOverlay').classList.remove('open');
-    $('athleteSheet').classList.remove('open');
+    const overlay = $('sheetOverlay');
+    const sheet   = $('athleteSheet');
+    if (sheetTl) sheetTl.kill();
+    sheetTl = gsap.timeline({
+      onComplete: () => { overlay.classList.remove('open'); }
+    })
+      .to(sheet,   { y: '100%', duration: 0.45, ease: 'spring-soft' }, 0)
+      .to(overlay, { autoAlpha: 0, duration: 0.3, ease: 'smooth' }, 0);
   }
 
   $('athleteTrigger').addEventListener('click', openSheet);
@@ -2349,6 +2479,8 @@
       <div id="streakWrap"></div>
       <div id="semanaWrap"></div>
     `;
+    // GSAP — entrada spring desde abajo
+    gsap.from(box, { opacity: 0, y: 24, duration: 0.6, ease: 'spring-soft' });
     if (typeof google !== 'undefined' && google.script) {
       google.script.run.withSuccessHandler(renderStreak).obtenerRachaUsuario(user);
       google.script.run.withSuccessHandler(renderSemana).obtenerSemanaUsuario(user);
@@ -2368,20 +2500,6 @@
   // —————————————————————————————————————————————————
   // DEBT
   // —————————————————————————————————————————————————
-  function checkDebt(user) {
-    const debtors = ['.'];
-    const modal = $('debtModal');
-    if (debtors.includes(user)) {
-      modal.style.display = 'flex';
-      requestAnimationFrame(() => modal.classList.add('show'));
-    }
-  }
-  function closeDebt() {
-    const m = $('debtModal');
-    m.classList.remove('show');
-    setTimeout(() => m.style.display = 'none', 300);
-  }
-
   // —————————————————————————————————————————————————
   // STATUS HOY
   // —————————————————————————————————————————————————
@@ -2418,17 +2536,6 @@
   // —————————————————————————————————————————————————
   // PROGRESS
   // —————————————————————————————————————————————————
-  function updateProgress() {
-    const stats = rankingData.find(r => r.nombre === selectedUser);
-    const dias = stats ? stats.dias : 0;
-    const pct = Math.min((dias / 4) * 100, 100);
-    $('heroNum').innerHTML = `${dias}<span>/4</span>`;
-    const bar = $('progressBar');
-    setTimeout(() => { bar.style.width = pct + '%'; }, 80);
-    if (dias >= 4) bar.classList.add('complete');
-    else bar.classList.remove('complete');
-  }
-
   // —————————————————————————————————————————————————
   // ACTIVITY CHIPS
   // —————————————————————————————————————————————————
@@ -2536,7 +2643,7 @@
   });
 
   function onSubmitSuccess({ tipo, tiempo, calorias, notas }) {
-    // Confetti explosion
+    // Confetti bilateral (canvas-confetti)
     const duration = 2400;
     const end = Date.now() + duration;
     (function frame() {
@@ -2562,10 +2669,8 @@
     }
     $('btnWA').href = 'https://wa.me/?text=' + encodeURIComponent(msg);
 
-    // Show modal
-    const m = $('waModal');
-    m.style.display = 'flex';
-    requestAnimationFrame(() => m.classList.add('show'));
+    // Modal WA — timeline GSAP (overlay fade + modal spring)
+    gsapOpenModal($('waModal'));
 
     loadRanking();
     $('gymForm').reset();
@@ -2575,18 +2680,350 @@
     $('dynamicFields').classList.remove('show');
   }
 
+  // —————————————————————————————————————————————————
+  // MODALES — timelines GSAP reutilizables
+  // Overlay: fade smooth / Card: spring-soft hacia arriba
+  // —————————————————————————————————————————————————
+  function gsapOpenModal(overlay) {
+    const card = overlay.querySelector('.modal');
+    overlay.style.display = 'flex';
+    gsap.timeline()
+      .fromTo(overlay, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3, ease: 'smooth' }, 0)
+      .fromTo(card,    { y: 40, scale: 0.94 }, { y: 0, scale: 1, duration: 0.55, ease: 'spring-soft' }, 0.05);
+  }
+
+  function gsapCloseModal(overlay, onDone) {
+    const card = overlay.querySelector('.modal');
+    gsap.timeline({ onComplete: () => { overlay.style.display = 'none'; if (onDone) onDone(); } })
+      .to(card,    { y: 40, scale: 0.94, duration: 0.35, ease: 'smooth' }, 0)
+      .to(overlay, { autoAlpha: 0, duration: 0.3, ease: 'smooth' }, 0.05);
+  }
+
   function closeWA() {
     vibrate();
-    const m = $('waModal');
-    m.classList.remove('show');
-    setTimeout(() => {
-      m.style.display = 'none';
-      checkUserStatus();
-    }, 300);
+    gsapCloseModal($('waModal'), checkUserStatus);
   }
 
   // —————————————————————————————————————————————————
-  // RANKING
+  // DEBT MODAL (checkDebt / closeDebt)
+  // —————————————————————————————————————————————————
+  function checkDebt(user) {
+    const debtors = ['.'];
+    const modal = $('debtModal');
+    if (debtors.includes(user)) gsapOpenModal(modal);
+  }
+  function closeDebt() {
+    gsapCloseModal($('debtModal'));
+  }
+
+  // —————————————————————————————————————————————————
+  // PROGRESS BAR — tween GSAP (sustituye setTimeout + style.width)
+  // —————————————————————————————————————————————————
+  function updateProgress() {
+    const stats = rankingData.find(r => r.nombre === selectedUser);
+    const dias = stats ? stats.dias : 0;
+    const pct = Math.min((dias / 4) * 100, 100);
+    $('heroNum').innerHTML = `${dias}<span>/4</span>`;
+    const bar = $('progressBar');
+    gsap.to(bar, { width: pct + '%', duration: 1.4, ease: 'spring-soft', overwrite: 'auto' });
+    bar.classList.toggle('complete', dias >= 4);
+  }
+
+  // —————————————————————————————————————————————————
+  // RANKING — Flip para reordenar + stagger de entrada
+  // —————————————————————————————————————————————————
+  function renderRankingData(data, slideDir) {
+    const list = $('rankList');
+    if (!data || !data.length) {
+      list.innerHTML = '<li class="rank-empty">Sin datos — sé el primero.</li>';
+      return;
+    }
+
+    // Captura posiciones actuales ANTES de re-renderizar (Flip)
+    const state = list.children.length ? Flip.getState(list.children) : null;
+
+    list.innerHTML = '';
+    const prevMap = {};
+    prevRankingData.forEach((r, i) => { prevMap[r.nombre] = i + 1; });
+
+    data.forEach((r, i) => {
+      const li = document.createElement('li');
+      li.className = 'rank-row';
+      li.dataset.flipId = r.nombre;
+      if (i === 0) li.classList.add('top-1');
+      else if (i === 1) li.classList.add('top-2');
+      else if (i === 2) li.classList.add('top-3');
+      if (r.nombre === selectedUser) li.classList.add('you');
+      const daysClass = r.dias >= 4 ? 'rank-days full' : 'rank-days';
+      const prevPos = prevMap[r.nombre];
+      let trend = '';
+      if (prevPos) {
+        const diff = prevPos - (i + 1);
+        if (diff > 0) trend = `<span class="trend up">↑${diff}</span>`;
+        else if (diff < 0) trend = `<span class="trend down">↓${Math.abs(diff)}</span>`;
+      }
+      li.innerHTML = `
+        <div class="rank-pos">${i + 1}${trend}</div>
+        <div class="rank-av">${getInitials(r.nombre)}</div>
+        <div class="rank-info">
+          <div class="rank-name">${r.nombre}</div>
+          <div class="rank-cal">${(r.calorias || 0).toLocaleString('es-MX')} kcal</div>
+        </div>
+        <div class="${daysClass}">${r.dias}d</div>
+      `;
+      list.appendChild(li);
+    });
+
+    const rows = list.querySelectorAll('.rank-row');
+
+    if (state) {
+      // Flip anima el reordenamiento si ya había filas previas
+      Flip.from(state, {
+        duration: 0.6, ease: 'spring-soft', nested: true, absolute: true,
+        onEnter: els => gsap.from(els, { opacity: 0, y: 20, duration: 0.4, ease: 'soft', stagger: 0.05 }),
+        onLeave: els => gsap.to(els, { opacity: 0, duration: 0.2 })
+      });
+    } else if (slideDir) {
+      // Primera vez con dirección de deslizamiento (cambio de pestaña)
+      gsap.fromTo(list,
+        { x: slideDir === 'left' ? 28 : -28, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.35, ease: 'spring-soft' });
+      gsap.from(rows, { opacity: 0, y: 16, duration: 0.5, ease: 'soft', stagger: { each: 0.06, from: 'start' } });
+    } else {
+      // Stagger de entrada inicial (top-1 pop, resto rise)
+      gsap.from(rows[0], { opacity: 0, scale: 0.85, duration: 0.7, ease: 'spring', delay: 0.28 });
+      gsap.from(Array.from(rows).slice(1), { opacity: 0, y: 20, duration: 0.6, ease: 'spring-soft', stagger: 0.07, delay: 0.1 });
+    }
+
+    if (selectedUser && activeRankTab === 'semana') updateProgress();
+  }
+
+  function switchRankTab(tab) {
+    if (tab === activeRankTab) return;
+    vibrate();
+    const goingRight = (tab === 'mes');
+    $('tabSemana').classList.toggle('active', tab === 'semana');
+    $('tabSemana').setAttribute('aria-selected', tab === 'semana');
+    $('tabMes').classList.toggle('active', tab === 'mes');
+    $('tabMes').setAttribute('aria-selected', tab === 'mes');
+    activeRankTab = tab;
+    const list = $('rankList');
+
+    // Salida GSAP
+    gsap.to(list, {
+      x: goingRight ? -24 : 24, opacity: 0, duration: 0.22, ease: 'smooth',
+      onComplete() {
+        gsap.set(list, { x: 0, opacity: 1 });
+        if (tab === 'semana') {
+          renderRankingData(rankingData, goingRight ? 'left' : 'right');
+          updatePeriodLabel('semana');
+        } else {
+          if (monthlyLoaded) {
+            renderRankingData(monthlyRankingData, 'left');
+            updatePeriodLabel('mes');
+          } else {
+            list.innerHTML = `
+              <li class="rank-skeleton"><div class="sk sk-pos"></div><div class="sk sk-av"></div><div class="sk sk-text"></div><div class="sk sk-tag"></div></li>
+              <li class="rank-skeleton"><div class="sk sk-pos"></div><div class="sk sk-av"></div><div class="sk sk-text"></div><div class="sk sk-tag"></div></li>
+              <li class="rank-skeleton"><div class="sk sk-pos"></div><div class="sk sk-av"></div><div class="sk sk-text"></div><div class="sk sk-tag"></div></li>`;
+            if (typeof google !== 'undefined' && google.script) {
+              google.script.run
+                .withSuccessHandler(d => {
+                  monthlyRankingData = d.ranking || [];
+                  monthlyLoaded = true;
+                  renderRankingData(monthlyRankingData, 'left');
+                  updatePeriodLabel('mes');
+                })
+                .withFailureHandler(() => showToast('Error al cargar ranking mensual', true))
+                .obtenerRankingMensual();
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function updatePeriodLabel(tab) {
+    const el = $('rankPeriodLabel');
+    if (!el) return;
+    if (tab === 'semana') {
+      el.textContent = `Semana ${String(getWeekNumber(new Date())).padStart(2,'0')} · ${new Date().getFullYear()}`;
+    } else {
+      const label = new Date().toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+      el.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+    }
+    // GSAP rise en lugar de class reset
+    gsap.fromTo(el, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, ease: 'soft' });
+  }
+
+  // —————————————————————————————————————————————————
+  // SEMANA DOTS — stagger GSAP (pop circular)
+  // —————————————————————————————————————————————————
+  function renderSemana(semana) {
+    const wrap = $('semanaWrap');
+    if (!wrap || !semana) return;
+    const hoyStr = new Date().toISOString().slice(0,10);
+    const dots = semana.map((d) => {
+      let cls = 'week-dot-circle';
+      if (d.estatus === 'CUMPLE')       cls += ' cumple';
+      else if (d.estatus === 'JUSTIFICADO') cls += ' justif';
+      else if (d.estatus === 'NO CUMPLE')   cls += ' nocumple';
+      if (d.fecha === hoyStr) cls += ' hoy';
+      return `<div class="week-dot">
+        <div class="${cls}"></div>
+        <span class="week-dot-label">${d.dia}</span>
+      </div>`;
+    }).join('');
+    wrap.innerHTML = `<div class="week-dots">${dots}</div>`;
+    // Stagger pop con GSAP (sin animation-delay en CSS)
+    gsap.from(wrap.querySelectorAll('.week-dot-circle'), {
+      opacity: 0, scale: 0.5, duration: 0.4, ease: 'spring',
+      stagger: { each: 0.06, from: 'start' }
+    });
+  }
+
+  // —————————————————————————————————————————————————
+  // ACTIVITY TICKER — marquee infinito con GSAP
+  // —————————————————————————————————————————————————
+  let tickerTween = null;
+  function renderActivityTicker(entries) {
+    if (!entries || !entries.length) return;
+    const track = $('tickerTrack');
+    const ticker = $('activityTicker');
+    if (!track || !ticker) return;
+    const icons = { 'Gimnasio':'🏋️', 'Fuera del Gym':'🏃', 'Vacaciones':'🌴', 'Incapacidad':'💊' };
+    const html = [...entries, ...entries].map(e =>
+      `<span class="ticker-item">
+        <span class="ticker-dot"></span>
+        ${icons[e.tipo] || '💪'} <span class="ticker-name">${e.nombre}</span>
+        <span class="ticker-sep">·</span>
+        ${e.calorias > 0 ? e.calorias + ' kcal' : e.tipo}
+        <span class="ticker-sep">·</span> hace ${e.hace}
+      </span>`
+    ).join('');
+    track.innerHTML = html;
+    ticker.style.display = 'block';
+
+    // Mata el tween previo y crea uno nuevo con la longitud actualizada
+    if (tickerTween) tickerTween.kill();
+    const totalWidth = track.scrollWidth / 2;
+    tickerTween = gsap.to(track, {
+      x: -totalWidth, duration: totalWidth / 60, ease: 'none',
+      repeat: -1, overwrite: 'auto',
+      modifiers: { x: x => (parseFloat(x) % totalWidth) + 'px' }
+    });
+  }
+
+  // —————————————————————————————————————————————————
+  // DANGER ZONE STRIP — GSAP (entrada con spring + wiggle CustomWiggle)
+  // —————————————————————————————————————————————————
+  function checkDangerZone() {
+    const strip = $('dangerStrip');
+    if (!strip || !selectedUser) return;
+    const userEntry = rankingData.find(r => r.nombre === selectedUser);
+    const dias = userEntry ? userEntry.dias : 0;
+    const needed = 4 - dias;
+    const dayNorm = new Date().getDay() === 0 ? 7 : new Date().getDay();
+    const daysLeftInclToday = 8 - dayNorm;
+
+    if (needed > 0 && daysLeftInclToday <= needed + 1) {
+      strip.style.display = 'flex';
+      strip.classList.toggle('critical', daysLeftInclToday <= needed);
+      strip.querySelector('.danger-text').innerHTML =
+        `Llevas <b>${dias} día${dias !== 1 ? 's' : ''}</b> esta semana — necesitas <b>${needed} más</b> para no multar.`;
+      gsap.fromTo(strip, { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.4, ease: 'spring-soft' });
+      if (daysLeftInclToday <= needed) {
+        // Wiggle de alerta si es crítico
+        gsap.fromTo(strip.querySelector('.danger-icon'),
+          { rotation: 0 }, { rotation: 'alertWiggle', duration: 0.8, delay: 0.4 });
+      }
+    } else {
+      gsap.to(strip, {
+        opacity: 0, y: -8, duration: 0.3, ease: 'smooth',
+        onComplete: () => { strip.style.display = 'none'; }
+      });
+    }
+  }
+
+  // —————————————————————————————————————————————————
+  // REFRESH BTN — GSAP rotation (360° continuo mientras carga)
+  // —————————————————————————————————————————————————
+  $('refreshBtn').addEventListener('click', () => {
+    vibrate();
+    const svg = $('refreshBtn').querySelector('svg');
+    monthlyLoaded = false; monthlyRankingData = [];
+    activeRankTab = 'semana';
+    $('tabSemana').classList.add('active'); $('tabMes').classList.remove('active');
+    const spinTween = gsap.to(svg, { rotation: '+=360', duration: 1, ease: 'none', repeat: -1 });
+    loadRanking();
+    setTimeout(() => { spinTween.kill(); gsap.set(svg, { rotation: 0 }); }, 1200);
+  });
+
+  // —————————————————————————————————————————————————
+  // KEYBOARD UX
+  // —————————————————————————————————————————————————
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { closeSheet(); closeDebt(); closeWA(); }
+  });
+
+  // —————————————————————————————————————————————————
+  // RULES ACCORDION — GSAP height animado (sin max-height hack)
+  // —————————————————————————————————————————————————
+  document.querySelectorAll('.rules-summary').forEach(btn => {
+    btn.addEventListener('click', () => {
+      vibrate();
+      const item    = btn.closest('.rules-item');
+      const wasOpen = item.classList.contains('open');
+
+      // Cierra todos los abiertos con GSAP
+      document.querySelectorAll('.rules-item.open').forEach(it => {
+        it.classList.remove('open');
+        it.querySelector('.rules-summary')?.setAttribute('aria-expanded', 'false');
+        const body = it.querySelector('.rs-body');
+        if (body) gsap.to(body, { height: 0, opacity: 0, duration: 0.35, ease: 'smooth', overwrite: 'auto' });
+        const arrow = it.querySelector('.rs-arrow');
+        if (arrow) gsap.to(arrow, { rotation: 0, color: 'inherit', duration: 0.3 });
+      });
+
+      if (!wasOpen) {
+        item.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+        const body = item.querySelector('.rs-body');
+        if (body) {
+          gsap.set(body, { height: 'auto', opacity: 1 });
+          gsap.from(body, { height: 0, opacity: 0, duration: 0.45, ease: 'spring-soft', overwrite: 'auto' });
+          // Stagger de elementos dentro
+          const items = body.querySelectorAll('ol li, p, .podium-row');
+          if (items.length) {
+            gsap.from(items, { opacity: 0, x: -12, duration: 0.35, ease: 'soft', stagger: 0.06, delay: 0.1 });
+          }
+        }
+        const arrow = item.querySelector('.rs-arrow');
+        if (arrow) gsap.to(arrow, { rotation: 90, color: 'var(--acc)', duration: 0.3, ease: 'spring-soft' });
+      }
+    });
+  });
+
+  // —————————————————————————————————————————————————
+  // SMOOTH SCROLL al "Reglas" — ScrollTrigger smooth scroll
+  // —————————————————————————————————————————————————
+  const rulesLink = document.getElementById('rulesLink');
+  if (rulesLink) {
+    rulesLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      vibrate();
+      const target = document.getElementById('rules');
+      if (target) gsap.to(window, { scrollTo: { y: target, offsetY: 20 }, duration: 1, ease: 'spring-soft' });
+    });
+  }
+
+  // —————————————————————————————————————————————————
+  // COUNT-UP en stats (delega a gsapCountUp)
+  // —————————————————————————————————————————————————
+  function countUpEl(el) { gsapCountUp(el); }
+
+  // —————————————————————————————————————————————————
+  // RANKING — carga y render principal
   // —————————————————————————————————————————————————
   function loadRanking() {
     if (typeof google !== 'undefined' && google.script) {
@@ -2608,164 +3045,9 @@
     }
   }
 
-  function renderRankingData(data, slideClass) {
-    const list = $('rankList');
-    if (!data || !data.length) {
-      list.innerHTML = '<li class="rank-empty">Sin datos — sé el primero.</li>';
-      return;
-    }
-    if (slideClass) list.classList.add(slideClass);
-    list.innerHTML = '';
-    const prevMap = {};
-    prevRankingData.forEach((r, i) => { prevMap[r.nombre] = i + 1; });
-    data.forEach((r, i) => {
-      const li = document.createElement('li');
-      li.className = 'rank-row';
-      if (i === 0) { li.classList.add('top-1'); li.style.animation = 'pop 0.7s var(--spring) 0.28s both'; }
-      else if (i === 1) { li.classList.add('top-2'); li.style.animation = 'rise 0.6s var(--spring-soft) 0.14s both'; }
-      else if (i === 2) { li.classList.add('top-3'); li.style.animation = 'rise 0.55s var(--soft) 0.07s both'; }
-      else { li.style.animationDelay = (i * 0.06) + 's'; }
-      if (r.nombre === selectedUser) li.classList.add('you');
-      const daysClass = r.dias >= 4 ? 'rank-days full' : 'rank-days';
-      const prevPos = prevMap[r.nombre];
-      let trend = '';
-      if (prevPos) {
-        const diff = prevPos - (i + 1);
-        if (diff > 0) trend = `<span class="trend up">↑${diff}</span>`;
-        else if (diff < 0) trend = `<span class="trend down">↓${Math.abs(diff)}</span>`;
-      }
-      li.innerHTML = `
-        <div class="rank-pos">${i + 1}${trend}</div>
-        <div class="rank-av">${getInitials(r.nombre)}</div>
-        <div class="rank-info">
-          <div class="rank-name">${r.nombre}</div>
-          <div class="rank-cal">${(r.calorias || 0).toLocaleString('es-MX')} kcal</div>
-        </div>
-        <div class="${daysClass}">${r.dias}d</div>
-      `;
-      list.appendChild(li);
-    });
-    if (slideClass) {
-      requestAnimationFrame(() => {
-        list.classList.remove(slideClass);
-        list.classList.add('slide-in-active');
-        setTimeout(() => list.classList.remove('slide-in-active'), 300);
-      });
-    }
-    if (selectedUser && activeRankTab === 'semana') updateProgress();
-  }
-
-  function switchRankTab(tab) {
-    if (tab === activeRankTab) return;
-    vibrate();
-    const goingRight = (tab === 'mes');
-    $('tabSemana').classList.toggle('active', tab === 'semana');
-    $('tabSemana').setAttribute('aria-selected', tab === 'semana');
-    $('tabMes').classList.toggle('active', tab === 'mes');
-    $('tabMes').setAttribute('aria-selected', tab === 'mes');
-    activeRankTab = tab;
-    const list = $('rankList');
-    list.classList.add(goingRight ? 'slide-out-left' : 'slide-out-right');
-    setTimeout(() => {
-      list.classList.remove('slide-out-left', 'slide-out-right');
-      if (tab === 'semana') {
-        renderRankingData(rankingData, 'slide-in-right');
-        updatePeriodLabel('semana');
-      } else {
-        if (monthlyLoaded) {
-          renderRankingData(monthlyRankingData, 'slide-in-left');
-          updatePeriodLabel('mes');
-        } else {
-          list.innerHTML = `
-            <li class="rank-skeleton"><div class="sk sk-pos"></div><div class="sk sk-av"></div><div class="sk sk-text"></div><div class="sk sk-tag"></div></li>
-            <li class="rank-skeleton"><div class="sk sk-pos"></div><div class="sk sk-av"></div><div class="sk sk-text"></div><div class="sk sk-tag"></div></li>
-            <li class="rank-skeleton"><div class="sk sk-pos"></div><div class="sk sk-av"></div><div class="sk sk-text"></div><div class="sk sk-tag"></div></li>`;
-          if (typeof google !== 'undefined' && google.script) {
-            google.script.run
-              .withSuccessHandler((data) => {
-                monthlyRankingData = data.ranking || [];
-                monthlyLoaded = true;
-                renderRankingData(monthlyRankingData, 'slide-in-left');
-                updatePeriodLabel('mes');
-              })
-              .withFailureHandler(() => showToast('Error al cargar ranking mensual', true))
-              .obtenerRankingMensual();
-          }
-        }
-      }
-    }, 220);
-  }
-
-  function updatePeriodLabel(tab) {
-    const el = $('rankPeriodLabel');
-    if (!el) return;
-    if (tab === 'semana') {
-      el.textContent = `Semana ${String(getWeekNumber(new Date())).padStart(2,'0')} · ${new Date().getFullYear()}`;
-    } else {
-      const label = new Date().toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
-      el.textContent = label.charAt(0).toUpperCase() + label.slice(1);
-    }
-    el.style.animation = 'none'; void el.offsetWidth;
-    el.style.animation = 'rise 0.4s var(--soft) forwards';
-  }
-
-  function renderSemana(semana) {
-    const wrap = $('semanaWrap');
-    if (!wrap || !semana) return;
-    const hoyStr = new Date().toISOString().slice(0,10);
-    const dots = semana.map((d, i) => {
-      let cls = 'week-dot-circle';
-      if (d.estatus === 'CUMPLE') cls += ' cumple';
-      else if (d.estatus === 'JUSTIFICADO') cls += ' justif';
-      else if (d.estatus === 'NO CUMPLE') cls += ' nocumple';
-      if (d.fecha === hoyStr) cls += ' hoy';
-      return `<div class="week-dot">
-        <div class="${cls}" style="animation-delay:${i*0.06}s"></div>
-        <span class="week-dot-label">${d.dia}</span>
-      </div>`;
-    }).join('');
-    wrap.innerHTML = `<div class="week-dots">${dots}</div>`;
-  }
-
-  function renderActivityTicker(entries) {
-    if (!entries || !entries.length) return;
-    const track = $('tickerTrack');
-    const ticker = $('activityTicker');
-    if (!track || !ticker) return;
-    const icons = { 'Gimnasio':'🏋️', 'Fuera del Gym':'🏃', 'Vacaciones':'🌴', 'Incapacidad':'💊' };
-    const html = [...entries, ...entries].map(e =>
-      `<span class="ticker-item">
-        <span class="ticker-dot"></span>
-        ${icons[e.tipo] || '💪'} <span class="ticker-name">${e.nombre}</span>
-        <span class="ticker-sep">·</span>
-        ${e.calorias > 0 ? e.calorias + ' kcal' : e.tipo}
-        <span class="ticker-sep">·</span> hace ${e.hace}
-      </span>`
-    ).join('');
-    track.innerHTML = html;
-    ticker.style.display = 'block';
-  }
-
-  function checkDangerZone() {
-    const strip = $('dangerStrip');
-    if (!strip || !selectedUser) return;
-    const userEntry = rankingData.find(r => r.nombre === selectedUser);
-    const dias = userEntry ? userEntry.dias : 0;
-    const needed = 4 - dias;
-    const dayNorm = new Date().getDay() === 0 ? 7 : new Date().getDay();
-    const daysLeftInclToday = 8 - dayNorm;
-    if (needed > 0 && daysLeftInclToday <= needed + 1) {
-      strip.style.display = 'flex';
-      strip.querySelector('.danger-text').innerHTML =
-        `Llevas <b>${dias} día${dias !== 1 ? 's' : ''}</b> esta semana — necesitas <b>${needed} más</b> para no multar.`;
-      strip.classList.toggle('critical', daysLeftInclToday <= needed);
-      requestAnimationFrame(() => strip.classList.add('show'));
-    } else {
-      strip.classList.remove('show');
-      setTimeout(() => strip.style.display = 'none', 300);
-    }
-  }
-
+  // —————————————————————————————————————————————————
+  // SEMANA PERFECTA — confetti + gsap + toast
+  // —————————————————————————————————————————————————
   function checkSemanaPerfecta() {
     if (!selectedUser) return;
     const userEntry = rankingData.find(r => r.nombre === selectedUser);
@@ -2778,6 +3060,7 @@
 
   function triggerSemanaPerfecta() {
     vibrate([80, 60, 80, 60, 200]);
+    // Confetti bilateral (canvas-confetti)
     const duration = 4000;
     const end = Date.now() + duration;
     (function frame() {
@@ -2786,122 +3069,18 @@
       if (Date.now() < end) requestAnimationFrame(frame);
     })();
     showToast('🏆 ¡SEMANA PERFECTA! 7/7 días. ¡Leyenda!');
-  }
-
-  function paintCountdown() {
-    const end = new Date('2026-12-13T23:59:59-06:00');
-    const now = new Date();
-    const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
-    const strip = $('countdownStrip');
-    const el = $('cdDays');
-    if (!strip || !el) return;
-    if (days <= 0) {
-      strip.classList.add('final');
-      el.textContent = '¡Hoy!';
-      strip.querySelector('.cd-label').textContent = '¡Último día del reto!';
-      return;
+    // Stamp GSAP en la tarjeta heroína
+    const hero = document.querySelector('.hero-num');
+    if (hero) {
+      gsap.timeline()
+        .from(hero, { scale: 1.4, filter: 'brightness(2)', duration: 0.4, ease: 'spring' })
+        .to(hero, { scale: 1, filter: 'brightness(1)', duration: 0.5, ease: 'soft' });
     }
-    animateNumber(el, days, 1200);
-    if (days <= 7) strip.classList.add('urgent');
-  }
-
-  $('refreshBtn').addEventListener('click', () => {
-    vibrate();
-    $('refreshBtn').classList.add('spin');
-    monthlyLoaded = false; monthlyRankingData = [];
-    activeRankTab = 'semana';
-    $('tabSemana').classList.add('active'); $('tabMes').classList.remove('active');
-    loadRanking();
-    setTimeout(() => $('refreshBtn').classList.remove('spin'), 1000);
-  });
-
-  // —————————————————————————————————————————————————
-  // KEYBOARD UX
-  // —————————————————————————————————————————————————
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      closeSheet();
-      closeDebt();
-      closeWA();
-    }
-  });
-
-  // —————————————————————————————————————————————————
-  // RULES ACCORDION
-  // —————————————————————————————————————————————————
-  document.querySelectorAll('.rules-summary').forEach(btn => {
-    btn.addEventListener('click', () => {
-      vibrate();
-      const item = btn.closest('.rules-item');
-      const wasOpen = item.classList.contains('open');
-      document.querySelectorAll('.rules-item.open').forEach(it => {
-        it.classList.remove('open');
-        const b = it.querySelector('.rules-summary');
-        if (b) b.setAttribute('aria-expanded', 'false');
-      });
-      if (!wasOpen) {
-        item.classList.add('open');
-        btn.setAttribute('aria-expanded', 'true');
-      }
-    });
-  });
-
-  // —————————————————————————————————————————————————
-  // SMOOTH SCROLL al "Reglas"
-  // —————————————————————————————————————————————————
-  const rulesLink = document.getElementById('rulesLink');
-  if (rulesLink) {
-    rulesLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      vibrate();
-      const target = document.getElementById('rules');
-      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
   }
 
   // —————————————————————————————————————————————————
-  // COUNT-UP de números en stats
+  // INIT — window.onload arriba incluye setupScrollReveals()
   // —————————————————————————————————————————————————
-  function countUpEl(el) {
-    if (el.dataset.counted === '1') return;
-    const target = parseFloat(el.dataset.countTo || '0');
-    const dur = 1100;
-    const start = performance.now();
-    function tick(now) {
-      const t = Math.min((now - start) / dur, 1);
-      const eased = 1 - Math.pow(1 - t, 3);
-      const value = target * eased;
-      el.textContent = (target % 1 === 0) ? Math.round(value) : value.toFixed(1);
-      if (t < 1) requestAnimationFrame(tick);
-      else { el.textContent = target; el.dataset.counted = '1'; }
-    }
-    requestAnimationFrame(tick);
-  }
-
-  // —————————————————————————————————————————————————
-  // INTERSECTION OBSERVER → reveal on scroll
-  // —————————————————————————————————————————————————
-  if ('IntersectionObserver' in window) {
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('in');
-          const counters = entry.target.querySelectorAll('.rs-num-value[data-count-to]');
-          counters.forEach(c => countUpEl(c));
-          io.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
-
-    document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
-  } else {
-    document.querySelectorAll('[data-reveal]').forEach(el => {
-      el.classList.add('in');
-      el.querySelectorAll('.rs-num-value[data-count-to]').forEach(c => {
-        c.textContent = c.dataset.countTo;
-      });
-    });
-  }
 </script>
   </body>
 </html>
